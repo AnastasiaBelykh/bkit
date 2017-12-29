@@ -2,85 +2,76 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 
-
-namespace Lab6_1
+namespace lab6_2
 {
     class Program
     {
-        public delegate float roots(float p1, int p2);
-
-        static roots discr = (float p1, int p2) =>
+        public static bool GetPropertyAttribute(PropertyInfo checkType, Type attributeType, out object attribute)
         {
-            return p1 * p1 - 4 * p2;
+            bool Result = false;
+            attribute = null;
 
-        };
-        static Func<float, int, float> discr1 = (float p1, int p2) =>
-        {
-            return p1 * p1 - 4 * p2;
-
-        };
-        static float Findroot(float p1, int p2)
-        {
-            return p1 / (2 * p2);
-        }
-
-
-
-        static void equation(int a, int b, int c, roots discr, roots root)
-        {
-            if (discr(b, a * c) > 0)
+            var isAttribute = checkType.GetCustomAttributes(attributeType, false);
+            if (isAttribute.Length > 0)
             {
-                Console.WriteLine("1 корень: " + root(-b + discr(b, a * c), a));
-                Console.WriteLine("2 корень: " + root(-b - discr(b, a * c), a));
+                Result = true;
+                attribute = isAttribute[0];
             }
-            else
-                if (discr(b, a * c) == 0)
-                Console.WriteLine("Корень: " + root(-b, a));
-
-            else
-                if (discr(b, a * c) < 0)
-                Console.WriteLine("Нет корней");
-        }
-
-        static void equation1(int a, int b, int c, Func<float, int, float> discr, Func<float, int, float> root)
-        {
-            if (discr(b, a * c) > 0)
-            {
-                Console.WriteLine("1 корень: " + root(-b + discr(b, a * c), a));
-                Console.WriteLine("2 корень: " + root(-b - discr(b, a * c), a));
-            }
-            else
-                if (discr(b, a * c) == 0)
-                Console.WriteLine("Корень: " + root(-b, a));
-
-            else
-                if (discr(b, a * c) < 0)
-                Console.WriteLine("Нет корней");
+            return Result;
         }
 
         static void Main(string[] args)
         {
-            int a, b, c;
-            Console.WriteLine("Введите a, b, c");
-            Console.Write("a: ");
-            a = Int32.Parse(Console.ReadLine());
-            Console.Write("b: ");
-            b = Int32.Parse(Console.ReadLine());
-            Console.Write("c: ");
-            c = Int32.Parse(Console.ReadLine());
+            Cat mycat = new Cat();
+            Type t = mycat.GetType();
 
-            Console.WriteLine();
-            Console.WriteLine("Поиск корней с использованием делегатов и выражения лямбда:");
-            equation(a, b, c, discr, Findroot);
+            Console.WriteLine("\nИнформация о типе");
 
-            Console.WriteLine();
-            Console.WriteLine("Нахождение корней с помощью функции:");
-            equation1(a, b, c, discr1, Findroot);
+            Console.WriteLine("Namespace " + t.Namespace);
+            Console.WriteLine("Assembly Qualified " + t.AssemblyQualifiedName);
+            Console.WriteLine("\nКонструкторы");
+            foreach (var x in t.GetConstructors())
+            {
+                Console.WriteLine(x);
+            }
+            Console.WriteLine("\nМетоды:");
+            foreach (var x in t.GetMethods())
+            {
+                Console.WriteLine(x);
+            }
+            Console.WriteLine("\nСвойства:");
+            foreach (var x in t.GetProperties())
+            {
+                Console.WriteLine(x);
+            }
+            Console.WriteLine("\nData (public):");
+            foreach (var x in t.GetFields())
+            {
+                Console.WriteLine(x);
+            }
 
-            Console.WriteLine();
-            Console.WriteLine("Нажмите любую клавишу для продолжения");
+            Console.WriteLine("\nАтрибуты свойств:");
+            foreach (var x in t.GetProperties())
+            {
+                object attrObj;
+                if (GetPropertyAttribute(x, typeof(NewAttribute), out attrObj))
+                {
+                    NewAttribute attr = attrObj as NewAttribute;
+                    Console.WriteLine(x.Name + " - " + attr.Description);
+                }
+            }
+
+            Console.WriteLine("\nМетод использования рефлексии");
+            Cat myCat = (Cat)t.InvokeMember(null, BindingFlags.CreateInstance, null, null, new object[] { });
+            object[] parameters = new object[] { 2, 5 };
+
+            object Result = t.InvokeMember("Cat_moves", BindingFlags.InvokeMethod, null, myCat, parameters);
+            Console.WriteLine("Current place " + Result);
+            Console.WriteLine("\nНажмите любую кнопку для продолжения");
             Console.Read();
+
         }
     }
 }
